@@ -15,9 +15,7 @@
   \setcounter{secnumdepth}{0}
   \newcommand{\TODO}[1]{\begin{center}\large\textbf{TODO:} #1\end{center}}
 \begin{document}
-% The file aaai.sty is the style file for AAAI Press
-% proceedings, working notes, and technical reports.
-%
+
 \title{Crazy, stupid, love.}
 \author{Victor Chibotaru\quad Larissa Laich\quad Galina Peycheva\quad Ondrej Skopek\\
   Team 5\\
@@ -178,7 +176,6 @@ This is an online challenge.
 \section{Step-by-step instructions}
 
 For an overview, see Figure \ref{fig:diag}.
-\TODO{@Larissa: re-do image with new steps}
 
 \TODO{Clarify the steps and instructions.}
 \TODO{Screenshots}
@@ -225,8 +222,11 @@ For an overview, see Figure \ref{fig:diag}.
   \item Find the \texttt{~/database\_backup/backup.zip}. Read through the \texttt{contents.txt} file next to it:
           it describes the contents of the ZIP archive. Based on the fact that the ZIP archive
           also contains the secret \texttt{db.txt} file, you can use a Known Plaintext
-        Attack (download PkCrack). Run:\\
-        \texttt{pkcrack -p contents.txt -e contents.txt -P contents.zip -C backup.zip -d output.zip}\\
+        Attack (download PkCrack). Run:
+        \begin{quote}
+            \texttt{pkcrack -p contents.txt -e contents.txt -P contents.zip \textbackslash}\\
+            \texttt{-C backup.zip -d output.zip}\\
+        \end{quote}
         \TODO{Remove the ca cert from the zip?}
         \TODO{Remove all the hints/comments about CA certs and the cert login}.
 
@@ -235,7 +235,9 @@ For an overview, see Figure \ref{fig:diag}.
 \end{enumerate}
 
 \begin{figure}
-    \includegraphics[width=0.9\textwidth]{images/diagram}
+    \begin{center}
+    \includegraphics[width=0.7\textwidth]{images/diagram}
+    \end{center}
     \caption{An overview of our challenge. The system's vulnerabilities
     are displayed as red boxes and obtained data in green boxes. The attacks
     to exploit the vulnerabilities are written on the edges.}
