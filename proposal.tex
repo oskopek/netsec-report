@@ -3,6 +3,30 @@
   \usepackage{times}
   \usepackage{helvet}
   \usepackage{courier}
+  \usepackage{hyperref}
+  \usepackage{listings}
+  \usepackage{color}
+  % For code highlighting. Taken from
+  % https://en.wikibooks.org/wiki/LaTeX/Source_Code_Listings
+  \definecolor{mygreen}{rgb}{0,0.6,0}
+  \definecolor{mygray}{rgb}{0.5,0.5,0.5}
+  \definecolor{mymauve}{rgb}{0.58,0,0.82}
+  \lstset{
+    basicstyle=\footnotesize,        % the size of the fonts that are used for the code
+    breakatwhitespace=false,         % sets if automatic breaks should only happen at whitespace
+    breaklines=true,                 % sets automatic line breaking
+    commentstyle=\color{mymauve},    % comment style
+    keepspaces=true,                 % keeps spaces in text, useful for keeping indentation of code (possibly needs columns=flexible)
+    keywordstyle=\color{blue},       % keyword style
+    numbers=left,                    % where to put the line-numbers; possible values are (none, left, right)
+    numbersep=5pt,                   % how far the line-numbers are from the code
+    showspaces=false,                % show spaces everywhere adding particular underscores
+    showstringspaces=false,
+    numberstyle=\tiny\color{mygray}, % the style that is used for the line-numbers
+    stringstyle=\color{mygreen},     % string literal style
+    tabsize=2,                       % sets default tabsize to 2 spaces
+  }
+
   \usepackage{graphicx}
   \usepackage[T1]{fontenc}
   \usepackage[utf8]{inputenc}
@@ -72,9 +96,10 @@ long shot, but it's definitely worth a try!
   \item Client VM
   \item Server VM (Linux, any version/distro)
         \begin{enumerate}
-          \item Web server (custom)
+          \item Web server (Flask + uwsgi + Nginx)
           \item SSH daemon
           \item Python
+          \item OpenSSL
         \end{enumerate}
 \end{enumerate}
 
@@ -85,8 +110,9 @@ long shot, but it's definitely worth a try!
   \item Python
   \item Java, JDGUI
   \item SSH client + sshpass
-  \item Internet access
   \item nmap
+  \item nc
+  \item a bruteforce solution for SSH (e.g. THC-Hydra)
 \end{itemize}
 
 \section{Learning goal}
@@ -98,13 +124,15 @@ steps often has several vulnerabilities. In our challenge, step:
 \begin{enumerate}
   \item teaches you that
         \begin{enumerate}
-          \item \TODO{XXE learning goal}
+          \item XXE is an easy to miss and easy to exploit vulnerability, which may lead to SSRF and data leaks,
+          \item one should disable XML's external entities feature if they are not needed,
           \item not sanitizing user input is a bad idea every time;
         \end{enumerate}
 
   \item teaches you that
         \begin{enumerate}
-          \item \TODO{SSTI learning goal}
+          \item there is such an attack as Server Side Template Injection (SSTI),
+          \item one should only use secure APIs and use them properly - reinventing the wheel is a bad security practice,
           \item not sanitizing user input is a bad idea every time;
         \end{enumerate}
 
@@ -113,12 +141,14 @@ steps often has several vulnerabilities. In our challenge, step:
           \item even inside a secured system, protecting yourself and all other systems
                 is still important,
           \item two factor authentication is important, but also important to get right,
-          \item not sanitizing user input is a bad idea every time;
+          \item implementing own crypto is a bad idea in most of the cases,
+          \item the two factor auth should resist bruteforce attacks (ideally one-time pins with a neglible probability of guessing);
         \end{enumerate}
 
   \item teaches you that
         \begin{enumerate}
           \item sysadmins might not be the security gurus they pretend to be,
+          \item the zip archives might be vulnerable to Known Plaintext Attacks,
           \item storing your company's important details locally in an encrypted zip
                 file is a very bad idea, even if only the admin has access.
         \end{enumerate}
@@ -131,24 +161,23 @@ Gain access to the company's employee registry data containing the
 girl's lost number! Steps:
 
 \begin{enumerate}
-  \item Get a user's credentials by exploiting the certificate web query form.
-  \item Get the admin's password (they check the forum quite often).
-  \item Get access to the admin's 2FA token.
+  \item Get a user's credentials by exploiting a vulnerability in the certificate web query form.
+  \item Get the first half of admin's SSH password by exploiting a vulnerability in the "contact admin" form.
+  \item Get the second half of admin's SSH password by exploiting a vulnerability in the two factor auth application.
   \item Get the encrypted ZIP file of employee records and decrypt it.
 \end{enumerate}
 
 \section{Mitigation}
 
 \begin{enumerate}
-  \item Thoroughly check user input!
-      Do not leave debugging info lying around. Lock down the permissions
-      of users that are running systems/web apps.
-  \item Once again, thoroughly check user input! Do not attempt to
-      ``interpret'' it --- escape it properly. Never write down important passwords,
+  \item Thoroughly check and sanitize user input!
+        For the XXE vulnerability - disable the External Entities feature in your XML parser.
+        For the SSTI vulnerability - use the correct API provided by the template rendering engine.
+  \item Do not leave debugging info lying around.
+  \item Never write down important passwords,
         at least in a way that is accessible online in any way.
   \item Do not create your own and buggy software for two factor authentication. Use
-        trusted, proven, and updated versions of software. Do input
-        validation!
+        trusted, proven, and updated versions of software.
   \item Never store important information on servers accessible from the
         external network. Do not store them in encrypted ZIP files. Also,
         store unrelated data separately.
@@ -169,9 +198,8 @@ This is an online challenge.
 
 \section{Hints}
 
-\begin{enumerate}
-    \item \texttt{/hints}
-\end{enumerate}
+We decided that for such a big challenge three hints are not enough. That's
+why we moved the hints to the "/hints" web page of the web server.
 
 \section{Step-by-step instructions}
 
@@ -186,51 +214,72 @@ For an overview, see Figure \ref{fig:diag}.
         out which services are running for each of the ports.
   \item Get user access to the company's server.
         \begin{enumerate}
-          \item Exploit one of the server's functions.
-              Use XXE to attack the service for listing the users and their public keys.
-                The service will accept ``smart'' queries written in XML to filter out
-                the search results, but luckily for you, the parser will be
-                vulnerable to XXE. Thus, it is possible to extract files
-                from the server.
-          \item Using the XXE exploit you can dump a list of
-                forum users and their password hashes, forgotten in a comment
-                in the actual web app source files.
-          \item Recover the passwords using a rainbow table.
+          \item Use XXE to attack the service for listing the users and their public keys.
+            The service will accept ``smart'' queries written in XML to filter out
+            the search results, but luckily for you, the parser will be
+            vulnerable to XXE. Thus, it is possible to extract files
+            from the server. The paths to the web application's source files
+            are ``accidentally'' inserted into the query response web page
+            as debug output.
+          \item To exploit the vulnerability use the following vector, which
+            dumps the contents of the file located at provided path:
+            \lstinputlisting[language=XML]{exploits/xxe_exploit.txt}
+          \item Use the exploit to dump the \texttt{\_\_init.py\_\_}
+            (the path to it is provided as "debug info" in the web page).
+          \item Read the dumped file and notice that it imports another
+            python module called "models.py".
+          \item Using the same exploit dump the \texttt{models.py} file.
+          \item Read the file and notice ``accidentally'' forgotten usernames
+            and password hashes.
+          \item Recover the passwords using e.g. John the Ripper or
+            a website such as \url{"https://crackstation.net"}.
         \end{enumerate}
 
-  \item Steal the admin's password.
+      \item Steal the first half of admin's SSH password.
         \begin{enumerate}
-          \item The company's admin contact form is vulnerable to reflected XSS. The attacker is
-              hence able to post an XSS message to the Q\&A system. Then the admin, who
-                checks it periodically, will run into this code and his browser
-                will execute it. However, the admin is not accesing the system using a browser!
-          \item The webapp uses the jinja templating engine. Run a server-side template
-              injection attack and extract the previously unobtainable \texttt{view.py} file.
-              Find the admin's SSH password.
+          \item The company's admin contact form is vulnerable to multiple
+            injection attacks (including reflected XSS and SSTI). Our intention
+            is to make students first try the obvious XSS vectors and realize
+            that they are not working because the admin wrote a script, which
+            generetes automatic replies to users' queries and is non aware of
+            JavaScript.
+          \item The second attack vector would be one against the template
+            rendering engine. Here's a possible exploit for it:
+            \lstinputlisting[language=Python]{exploits/flask_exploit.txt}.
+            This exploit starts a remote shell accessible at port 8000.
+          \item Using nc connect to the shell and explore the web application
+            source files.
+          \item Find the previously unobtainable \texttt{view.py} file (we made
+            sure that the file is unreadable with the previous XXE exploit).
+          \item Find the first half of admin's SSH password in the file.
         \end{enumerate}
 
-  \item Reverse engineer the APK downloaded from the web app.
+      \item Steal the second half of admin's SSH password.
         \begin{enumerate}
           \item Find the 2FA app in the menu and download it.
           \item Use a java decompiler and check out the algorithm.
-              Notice that it returns only the last three decimal digits!
+            Understand that there's no way to recover the needed secret, but
+            the algorithm returns only three decimal digits!
           \item Brute-force the obtained password appended with a 2FA token
-              using \texttt{ssh} and \texttt{sshpass}.
-              You have gained access to the admin's account using SSH!
+            using \texttt{THC-Hydra} or \texttt{ssh} and \texttt{sshpass}.
         \end{enumerate}
 
-  \item Find the \texttt{~/database\_backup/backup.zip}. Read through the \texttt{contents.txt} file next to it:
-          it describes the contents of the ZIP archive. Based on the fact that the ZIP archive
-          also contains the secret \texttt{db.txt} file, you can use a Known Plaintext
-        Attack (download PkCrack). Run:
-        \begin{quote}
+      \item Recover the girl's number from the encrypted database.
+        \begin{enumerate}
+          \item Find the \texttt{~/database\_backup/backup.zip}.
+          \item Read through the \texttt{contents.txt} file next to it:
+            it describes the contents of the ZIP archive.
+          \item Understand that the encrypted archive contains the file.
+          \item Realize that a Known Plaintext Attack is possible.
+          \item Use, for example, PkCrack:\\
             \texttt{pkcrack -p contents.txt -e contents.txt -P contents.zip \textbackslash}\\
             \texttt{-C backup.zip -d output.zip}\\
-        \end{quote}
-        \TODO{Remove the ca cert from the zip?}
-        \TODO{Remove all the hints/comments about CA certs and the cert login}.
-
-  \item Find the girl's number in the DB!
+            (where \texttt{contents.zip} should be created with the same zip
+            options as the original \texttt{backup.zip}. The options are stated
+            in the contents.txt file. The archive should be generated on the
+            server machine).
+          \item Find the girl's number in the DB!
+        \end{enumerate}
 
 \end{enumerate}
 
@@ -250,13 +299,59 @@ For an overview, see Figure \ref{fig:diag}.
 \TODO{Add implementation details --- describe the system implementation, what challenges there were, \ldots}
 \TODO{Add references for attacks!}
 
+\subsection{Network}
+  The network consists of two VMs with statically allocated ip addresses:
+  \begin{itemize}
+    \item Server - 192.168.0.1
+    \item Client - 192.168.0.2
+  \end{itemize}
+  Both of the VMs have "internal network" VirtualBox network adapters. No other
+  special network setup is required, so deploying the challenge in some other
+  environment should be straightforward. Just make sure to statically set the
+  server's ip address and provide it to the client. \\
+
+
+  The client VM  has an additional "NAT" adapter for internet access.
+\subsection{Server}
+  The server is a Debian 9 VM. It runs an Nginx + uwsgi + Flask web server.
+  There's two user accounts available for interactive login (via SSH too):
+  \begin{itemize}
+    \item root:gtavibkznsseauu
+    \item bestadminever:ilovekittens988
+  \end{itemize}
+
+  We took care to protect the server against DOS attacks from evil students (in
+  case the challenge gets deployed to a platform like Hacking Lab):
+  \begin{itemize}
+    \item None of the accounts on the server has sudo privileges (except root).
+    \item All the important for the challenges files are owned by root and only
+      readable by corresponding users. The only exception are the files contained
+      in the \texttt{/home/www-data/webapp\_writable} folder. Those are the
+      Linux fifo between Nginx and uwsgi and the logs of flask server. We could
+      not come up with a solution for those files. In case they get deleted
+      all that needs to be done to restore the server's work is:
+      \texttt{systemctl restart webapp.service} invoked by root.
+  \end{itemize}
+
+  Another risk is students getting root access by exploiting some fresh Linux
+  vulnerabilities, but we see no way of defending against it in advance.
+
+\subsection{Client}
+  The client is a Ubuntu 16.04 VM. It has all the necessary tools installed in
+  \texttt{/home/hacker/tools} folder. \\
+
+  It also has the "gugli" hostname and corresponding ip address added. Other than
+  that it is a typical out-of-box Ubuntu distribution and can easily be replaced
+  by any other distro.
+
 \subsection{Setup}
 
 \begin{enumerate}
     \item Import the two VMs into VirtualBox.
     \item Start the server VM (headless).
-    \item Login to the client VM using \texttt{hacker/compass}.
-    \item The server is accessible at the dns name \texttt{gugli} \TODO{hosts file entry client-side + static IPs in a subnet}.
+    \item Login to the client VM using \texttt{hacker:hacker}.
+    \item The server is accessible at the dns name \texttt{gugli} or ip
+      \texttt{192.168.0.1}
 \end{enumerate}
 
 \end{document}
