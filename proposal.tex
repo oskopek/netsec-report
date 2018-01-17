@@ -26,8 +26,8 @@
     stringstyle=\color{mygreen},     % string literal style
     tabsize=2,                       % sets default tabsize to 2 spaces
   }
-  
-  
+
+
 \usepackage[numbers,square]{natbib}
 \bibliographystyle{unsrtnat}
 
@@ -181,30 +181,30 @@ girl's lost number! The registry data is surely backed up in some folder on the 
 	\item For the XXE vulnerability --- disable the External Entities feature in your XML parser.
 	\item Minimize the attack surface by not exposing such powerful tools like XML queries
         to users.
-  \end{itemize}        
-        
+	\item Do not leave debugging info lying around.
+  \end{itemize}
+
   \item[Step 2]~
 	\begin{itemize}
 	\item Thoroughly check and sanitize user input!
 	\item For the SSTI vulnerability --- use the correct API provided by the template rendering engine.
-	\item Do not leave debugging info lying around. 
     \item Never write down important passwords,
         at least in a way that is accessible online in any way.
 	\end{itemize}
-	
+
   \item[Step 3]~
   \begin{itemize}
   	\item Do not create your own and buggy software for two factor authentication.
   	\item Use trusted, proven, and updated versions of software.
-  \end{itemize}    
-        
+  \end{itemize}
+
   \item[Step 4]~
 	\begin{itemize}
 	\item Never store critically important information on servers accessible from the
         external network if access is not absolutely necessary.
      \item Do not store backups in password-protected ZIP files.
      \item Store unrelated data separately.
-     \end{itemize}	  
+     \end{itemize}
 \end{description}
 
 \section{Type of challenge}
@@ -338,7 +338,7 @@ The tools you will need are available in \texttt{\textasciitilde/tools}. For a g
   server's IP address and provide it to the client.
 
   The client VM  has an additional "NAT" adapter for internet access.
-  
+
 \subsection{Server}
   The server is a Debian 9 VM. It runs an Nginx + uwsgi + Flask web server.
   There are two user accounts available for interactive login (via SSH too):
@@ -361,7 +361,7 @@ The tools you will need are available in \texttt{\textasciitilde/tools}. For a g
   \end{itemize}
 
   Another risk is students getting root access by exploiting some fresh Linux
-  vulnerabilities, but we see no way of defending against ahead of time.
+  vulnerabilities, but we see no way of defending against it ahead of time.
 
 \subsection{Client}
   The client is a Ubuntu 16.04 VM. It has all the necessary tools installed in
