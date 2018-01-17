@@ -2,3 +2,9 @@
 *.aux
 *.log
 *.out
+*.bbl
+*.blg
+*.run.xml
+*.synctex.gz
+*.bcf
+*.bak
