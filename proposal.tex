@@ -131,24 +131,24 @@ We will need two VMs:
 
 In practice, getting root access is a multistep process. Systems and
 networks are protected on multiple levels. (Un)fortunately, each of the
-steps often has several vulnerabilities. In our challenge, level:
+steps often has several vulnerabilities. In our challenge:
 
-\begin{enumerate}
-  \item teaches you that
+\begin{description}
+  \item[Level 1] teaches you that
         \begin{enumerate}
           \item XML External Entity Injection (XXE, \citep{xxe}) is an easy to miss and easy to exploit vulnerability, which may lead to Server-Side Request Forgery (SSRF, \citep{ssrf}) and data leaks,
           \item one should disable XML's external entities processing if they are not needed,
           \item not sanitizing user input is a bad idea every time;
         \end{enumerate}
 
-  \item teaches you that
+  \item[Level 2] teaches you that
         \begin{enumerate}
           \item there is such an attack as Server Side Template Injection (SSTI, \citep{ssti}),
           \item one should only use secure APIs and use them properly --- reinventing the wheel is a bad security practice,
           \item again: not sanitizing user input is a bad idea every time;
         \end{enumerate}
 
-  \item teaches you that
+  \item[Level 3] teaches you that
         \begin{enumerate}
           \item even inside a secured system, protecting yourself and all other systems
                 is still important,
@@ -157,15 +157,14 @@ steps often has several vulnerabilities. In our challenge, level:
           \item two factor authentication should resist brute-force attacks (ideally, use one-time tokens with a negligible probability of guessing);
         \end{enumerate}
 
-  \item teaches you that
+  \item[Level 4] teaches you that
         \begin{enumerate}
           \item system administrators might not be the security gurus they pretend to be,
           \item ZIP archives might be vulnerable to Known-Plaintext Attacks (KPA, \citep{kpa}),
           \item storing your company's important details locally in an encrypted ZIP
                 file is a very bad idea, even if only the administrator has access.
         \end{enumerate}
-
-\end{enumerate}
+\end{description}
 
 \section{Mission}
 
@@ -306,11 +305,11 @@ The tools you will need are available in \texttt{\textasciitilde/tools}. For a g
       \item Recover the girl's number from the encrypted database.
         \begin{enumerate}
           \item Find the \texttt{\textasciitilde/database\_backup/backup.zip} file.
-          \item Read through the \texttt{contents.txt} file next to it.
-            Tt describes the contents of the ZIP archive.
+          \item Read through the \texttt{contents.txt} file next to the backup file.
+            It describes the contents of the ZIP archive.
           \item Understand that the encrypted archive contains the file.
           \item Realize that a Known-Plaintext Attack is possible.
-          \item Use, for example, PkCrack:\\
+          \item Use, for example, pkcrack:\\
             \texttt{\textasciitilde/tools/pkcrack-1.2.2/src/pkcrack -c contents.txt \textbackslash}\\
             \texttt{-p contents.txt -P contents.zip -C backup.zip -d output.zip}\\
             Important note: \texttt{contents.zip} should be created with the same \texttt{zip}
@@ -351,7 +350,7 @@ The tools you will need are available in \texttt{\textasciitilde/tools}. For a g
   case the challenge gets deployed to a platform like Hacking Lab):
   \begin{itemize}
     \item None of the accounts on the server has \texttt{sudo} privileges (except root).
-    \item All the important for the challenges files are owned by root and only
+    \item All the files important for the challenges are owned by root and only
       readable by corresponding users. The only exception are the files contained
       in the \texttt{/home/www-data/webapp\_writable} folder. Those are the
       Linux FIFO between Nginx and uwsgi, and the logs of the Flask server. We could
@@ -367,8 +366,8 @@ The tools you will need are available in \texttt{\textasciitilde/tools}. For a g
   The client is a Ubuntu 16.04 VM. It has all the necessary tools installed in
   \texttt{/home/hacker/tools} folder.
 
-  It also has the \texttt{gugli} hostname and corresponding IP address added in \texttt{/etc/hosts}. Other than
-  that it, is a typical out-of-the-box Ubuntu distribution and could easily be replaced
+  It also has the \texttt{gugli} hostname and corresponding IP address added in \texttt{/etc/hosts}.   
+  Other than that, it is a typical out-of-the-box Ubuntu distribution and could easily be replaced
   by any other distribution (i.e.~the Hacking Lab Client VM).
 
 \subsection{Local challenge setup}
@@ -379,7 +378,7 @@ The tools you will need are available in \texttt{\textasciitilde/tools}. For a g
     \item Login to the Client VM using \texttt{hacker:hacker}.
     \item Network reconnaissance can essentially be skipped: the server is accessible at the IP \texttt{192.168.0.1} or DNS name \texttt{gugli}
     from the Client VM.
-    \item From here, follow the Step-By-Step instructions in Section~\ref{sbs}.
+    \item From here, follow the step-by-step instructions in Section~\ref{sbs}.
 \end{enumerate}
 
 \bibliography{biblio}
