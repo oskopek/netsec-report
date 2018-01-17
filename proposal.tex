@@ -72,10 +72,6 @@
     decrypt and decompress the file, and get the phone number you lost!
 \end{abstract}
 
-%TODO:
-% * Enhance mitigation part?
-% * Clarify the steps and instructions.
-%   * Screenshots?
 
 \section{Backstory}
 
@@ -230,11 +226,12 @@ We've decided that for such a big challenge three hints are not enough. That's
 why we moved the hints to the \texttt{/hints} URL path of the web server
 and made them more fine-grained.
 
-\section{Step-by-step instructions}
+\section{Step-by-step instructions}\label{sbs}
 
 \begin{figure}
     \begin{center}
-    \includegraphics[width=0.65\textwidth]{images/diagram}
+    \vspace{-1em}
+    \includegraphics[width=0.6\textwidth]{images/diagram}
     \end{center}
     \caption{An overview of our challenge. The system's vulnerable components
     are displayed as red boxes and the obtained data in green boxes. The attacks
@@ -242,15 +239,15 @@ and made them more fine-grained.
     \label{fig:diag}
 \end{figure}
 
-For a general overview of the different steps, see Figure \ref{fig:diag}.
+The tools you will need are available in \texttt{\textasciitilde/tools}. For a general overview of the different levels of the challenge, see Figure \ref{fig:diag}.
 
 \begin{enumerate}
-  \item Do network reconnaissance.
+  \item Do network reconnaissance to gain knowledge about the connected machines.
   \item Find the Server VM, enumerate all the open ports using nmap, figure
         out which services are running for each of the ports.
   \item Get user access to the company's server.
         \begin{enumerate}
-          \item Use an XXE exploit to attack the service for listing users and their public keys.
+          \item Use an XXE exploit to attack the service for listing users and their certificates.
             The service will accept ``smart'' queries written in XML to filter out
             the search results, but luckily for you, the parser is
             vulnerable to XXE. Thus, it is possible to extract files
@@ -298,7 +295,8 @@ For a general overview of the different steps, see Figure \ref{fig:diag}.
       \item Steal the second half of admin's SSH password.
         \begin{enumerate}
           \item Find the 2FA app in the menu and download it.
-          \item Use a java decompiler and check out the algorithm.
+          \item Use a java decompiler and check out the algorithm:
+			\begin{center}\texttt{java -jar \textasciitilde/tools/jd-gui-1.4.0.jar}\end{center}
             Understand that there's no way to recover the needed secret, but
             the algorithm returns only three decimal digits!
           \item Brute-force the obtained password appended with a 2FA token
@@ -313,8 +311,8 @@ For a general overview of the different steps, see Figure \ref{fig:diag}.
           \item Understand that the encrypted archive contains the file.
           \item Realize that a Known-Plaintext Attack is possible.
           \item Use, for example, PkCrack:\\
-            \texttt{pkcrack -p contents.txt -e contents.txt -P contents.zip \textbackslash}\\
-            \texttt{-C backup.zip -d output.zip}\\
+            \texttt{\textasciitilde/tools/pkcrack-1.2.2/src/pkcrack -c contents.txt \textbackslash}\\
+            \texttt{-p contents.txt -P contents.zip -C backup.zip -d output.zip}\\
             Important note: \texttt{contents.zip} should be created with the same \texttt{zip}
             options as the original \texttt{backup.zip}. The options are stated
             in the \texttt{contents.txt} file. The archive should be generated on the
@@ -379,8 +377,9 @@ For a general overview of the different steps, see Figure \ref{fig:diag}.
     \item Import the two VMs into VirtualBox.
     \item Start the Server VM (headless).
     \item Login to the Client VM using \texttt{hacker:hacker}.
-    \item The server is accessible at the IP \texttt{192.168.0.1} or DNS name \texttt{gugli}
+    \item Network reconnaissance can essentially be skipped: the server is accessible at the IP \texttt{192.168.0.1} or DNS name \texttt{gugli}
     from the Client VM.
+    \item From here, follow the Step-By-Step instructions in Section~\ref{sbs}.
 \end{enumerate}
 
 \bibliography{biblio}
